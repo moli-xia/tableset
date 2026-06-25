@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>会议室排座</title>
+  <link rel="icon" type="image/svg+xml" href="assets/app-icon.svg">
+  <link rel="apple-touch-icon" href="assets/app-icon.svg">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <img class="brand-icon" src="assets/app-icon.svg" alt="" aria-hidden="true">
+        <div>
+          <input id="roomNameInput" class="room-name-input" type="text" value="未命名会议室" aria-label="会议室名称">
+          <p id="statusLine">正在载入</p>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button class="icon-btn" id="undoBtn" title="撤销" type="button">↶</button>
+        <button class="icon-btn" id="redoBtn" title="重做" type="button">↷</button>
+        <button class="text-btn" id="saveBtn" type="button">保存</button>
+        <button class="text-btn primary" id="exportPngBtn" type="button">导出图片</button>
+        <button class="text-btn" id="exportJsonBtn" title="导出当前布局、名单、座位分配和草稿引用数据，用于备份或下次继续编辑" type="button">导出布局</button>
+        <button class="text-btn" id="importJsonBtn" title="导入之前导出的布局文件，恢复布局、名单和座位分配" type="button">导入布局</button>
+        <input id="projectFile" class="visually-hidden" type="file" accept="application/json,.json">
+      </div>
+    </header>
+
+    <aside class="left-panel">
+      <section class="panel-section">
+        <div class="section-heading">
+          <h2>工具</h2>
+        </div>
+        <div class="tool-grid" id="toolGrid">
+          <button class="tool-btn is-active" data-tool="select" type="button" title="选择和移动">
+            <span class="tool-icon tool-select"></span><b>选择</b>
+          </button>
+          <button class="tool-btn" data-tool="pan" type="button" title="平移画布">
+            <span class="tool-icon tool-pan"></span><b>平移</b>
+          </button>
+          <button class="tool-btn" data-tool="rotate" type="button" title="旋转对象">
+            <span class="tool-icon tool-rotate"></span><b>旋转</b>
+          </button>
+          <button class="tool-btn" data-tool="marquee" type="button" title="框选多个对象">
+            <span class="tool-icon tool-marquee"></span><b>框选</b>
+          </button>
+          <button class="tool-btn" data-tool="table" type="button" title="绘制桌面">
+            <span class="tool-icon tool-table"></span><b>桌面</b>
+          </button>
+          <button class="tool-btn" data-tool="shape-rect" type="button" title="绘制矩形">
+            <span class="tool-icon tool-rect"></span><b>矩形</b>
+          </button>
+          <button class="tool-btn" data-tool="shape-roundRect" type="button" title="绘制圆角矩形">
+            <span class="tool-icon tool-round"></span><b>圆角</b>
+          </button>
+          <button class="tool-btn" data-tool="shape-circle" type="button" title="绘制圆形或椭圆">
+            <span class="tool-icon tool-circle"></span><b>圆形</b>
+          </button>
+          <button class="tool-btn" data-tool="shape-triangle" type="button" title="绘制三角形">
+            <span class="tool-icon tool-triangle"></span><b>三角</b>
+          </button>
+          <button class="tool-btn" data-tool="seat" type="button" title="添加椅子">
+            <span class="tool-icon tool-seat"></span><b>椅子</b>
+          </button>
+          <button class="tool-btn" data-tool="label" type="button" title="添加文字">
+            <span class="tool-icon tool-text"></span><b>文字</b>
+          </button>
+        </div>
+      </section>
+
+      <section class="panel-section">
+        <div class="section-heading">
+          <h2>草稿</h2>
+        </div>
+        <div class="stack">
+          <button class="wide-btn" id="draftImportBtn" type="button">导入草稿</button>
+          <button class="wide-btn" id="draftAutoBtn" type="button">草稿自动布局</button>
+          <button class="wide-btn" id="draftClearBtn" type="button">清除草稿</button>
+          <input id="draftFile" class="visually-hidden" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
+        </div>
+      </section>
+
+      <section class="panel-section">
+        <div class="section-heading">
+          <h2>视图</h2>
+        </div>
+        <div class="segmented">
+          <button id="zoomOutBtn" type="button">-</button>
+          <button id="fitBtn" type="button">适配</button>
+          <button id="zoomInBtn" type="button">+</button>
+        </div>
+        <label class="check-row">
+          <input id="snapToggle" type="checkbox" checked>
+          <span>网格吸附</span>
+        </label>
+        <label class="check-row">
+          <input id="referenceToggle" type="checkbox" checked>
+          <span>显示参考图</span>
+        </label>
+      </section>
+    </aside>
+
+    <main class="workspace">
+      <div class="canvas-bar">
+        <div>
+          <strong id="canvasTitle">未命名会议室</strong>
+          <span id="selectionHint">未选择对象</span>
+        </div>
+        <div class="canvas-tools">
+          <button class="mini-btn" id="selectAllBtn" type="button">全选</button>
+          <button class="mini-btn" id="rotateLeftBtn" type="button">左转</button>
+          <button class="mini-btn" id="rotateRightBtn" type="button">右转</button>
+          <button class="mini-btn" id="groupBtn" type="button">组合</button>
+          <button class="mini-btn" id="ungroupBtn" type="button">取消组合</button>
+          <button class="mini-btn" id="duplicateBtn" type="button">复制</button>
+          <button class="mini-btn danger" id="deleteBtn" type="button">删除</button>
+          <button class="mini-btn danger" id="clearLayoutBtn" title="清空当前画布布局，名单保留" type="button">清空布局</button>
+        </div>
+      </div>
+
+      <div class="stage-frame">
+        <svg id="stage" viewBox="0 0 1600 1000" aria-label="会议室排座画布">
+          <defs>
+            <pattern id="smallGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e7e2d8" stroke-width="1"/>
+            </pattern>
+            <pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse">
+              <rect width="100" height="100" fill="url(#smallGrid)"/>
+              <path d="M 100 0 L 0 0 0 100" fill="none" stroke="#d2cabd" stroke-width="1.4"/>
+            </pattern>
+            <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#3f3a32" flood-opacity="0.12"/>
+            </filter>
+          </defs>
+          <rect class="stage-bg" x="0" y="0" width="1600" height="1000" fill="url(#grid)"/>
+          <g id="referenceLayer"></g>
+          <g id="itemsLayer"></g>
+          <g id="draftLayer"></g>
+        </svg>
+      </div>
+    </main>
+
+    <aside class="right-panel">
+      <section class="panel-section roster-section">
+        <div class="section-heading">
+          <h2>名单</h2>
+          <span id="rosterCount">0人</span>
+        </div>
+        <div class="roster-controls">
+          <textarea id="peopleInput" rows="5" placeholder="粘贴名单"></textarea>
+          <div class="import-line simple">
+            <button class="mini-btn" id="loadPeopleBtn" type="button">载入</button>
+            <button class="mini-btn" id="peopleFileBtn" type="button">文件</button>
+            <input id="peopleFile" class="visually-hidden" type="file" accept=".csv,.txt,text/csv,text/plain">
+          </div>
+          <input class="search-input" id="personSearch" type="search" placeholder="搜索姓名">
+          <div class="assignment-actions">
+            <button class="mini-btn" id="autoAssignBtn" type="button">自动排</button>
+            <button class="mini-btn" id="clearAssignBtn" type="button">清空座位</button>
+            <button class="mini-btn danger" id="clearPeopleBtn" type="button">清空名单</button>
+          </div>
+        </div>
+        <div class="people-list" id="peopleList"></div>
+      </section>
+
+      <section class="panel-section inspector-section">
+        <div class="section-heading">
+          <h2>属性</h2>
+        </div>
+        <div id="inspector"></div>
+      </section>
+
+      <section class="panel-section reference-section" id="referenceSection">
+        <div class="section-heading">
+          <h2>草稿</h2>
+        </div>
+        <button class="reference-preview" id="referencePreviewBtn" type="button" title="放大查看草稿">
+        <img id="referenceImage" src="assets/draft-placeholder.svg" alt="未导入草稿">
+        </button>
+      </section>
+    </aside>
+  </div>
+
+  <div class="draft-viewer" id="draftViewer" aria-hidden="true">
+    <div class="draft-viewer-bar">
+      <strong id="draftViewerTitle">草稿</strong>
+      <div>
+        <button class="mini-btn" id="draftViewerZoomOut" type="button">-</button>
+        <button class="mini-btn" id="draftViewerReset" type="button">适配</button>
+        <button class="mini-btn" id="draftViewerZoomIn" type="button">+</button>
+        <button class="mini-btn danger" id="draftViewerClose" type="button">关闭</button>
+      </div>
+    </div>
+    <div class="draft-viewer-stage" id="draftViewerStage">
+      <img id="draftViewerImage" src="assets/draft-placeholder.svg" alt="放大查看草稿">
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

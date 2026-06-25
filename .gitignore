@@ -1,0 +1,6 @@
+*.zip
+.DS_Store
+.user.ini
+node_modules/
+dist/
+coverage/
